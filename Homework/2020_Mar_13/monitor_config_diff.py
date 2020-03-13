@@ -7,7 +7,7 @@ import time
 
 def qytang_get_config(ip, username='admin', password='Cisc0123'):
     try:
-        cmd = 'show running-config | begin hostname'
+        cmd = 'show running-config | begin hostname'  # 教主的re，是为了用正则表达式去获取这个命令的输出内容吗？
         config = qytang_ssh(ip, username, password, cmd=cmd)
         return config
     except Exception:
@@ -15,26 +15,47 @@ def qytang_get_config(ip, username='admin', password='Cisc0123'):
 
 
 def qytang_check_diff(ip, username='admin', password='Cisc0123'):
+    # while True:
+    #     before_config = qytang_get_config(ip, username, password)
+    #     m = hashlib.md5()
+    #     m.update(before_config.encode())
+    #     before_md5 = m.hexdigest()
+    #
+    #     time.sleep(5)
+    #
+    #     new_config = qytang_get_config(ip, username, password)
+    #     m = hashlib.md5()
+    #     m.update(new_config.encode())
+    #     new_md5 = m.hexdigest()
+    #
+    #     if before_md5 == new_md5:
+    #         print(before_md5)
+    #         continue
+    #     else:
+    #         print(new_md5)
+    #         print('MD5 value changed')
+    #         break
+
+    # 优化代码，之前的方法是每循环一次，先获取一次配置，间隔5秒后，再获取一次配置，作比较。现在的方法是每次循环只读取一次配置。
+    before_md5 = ''
     while True:
-        before_config = qytang_get_config(ip, username, password)
-        m = hashlib.md5()
-        m.update(before_config.encode())
-        before_md5 = m.hexdigest()
-
-        time.sleep(5)
-
-        new_config = qytang_get_config(ip, username, password)
-        m = hashlib.md5()
-        m.update(new_config.encode())
-        new_md5 = m.hexdigest()
-
-        if before_md5 == new_md5:
-            print(before_md5)
-            continue
+        if before_md5 == '':
+            before_config = qytang_get_config(ip, username, password)
+            m = hashlib.md5()
+            m.update(before_config.encode())
+            before_md5 = m.hexdigest()
         else:
-            print(new_md5)
-            print('MD5 value changed')
-            break
+            new_config = qytang_get_config(ip, username, password)
+            m = hashlib.md5()
+            m.update(new_config.encode())
+            new_md5 = m.hexdigest()
+            if before_md5 == new_md5:
+                print(before_md5)
+            else:
+                print(new_md5)
+                print('MD5 value changed')
+                break
+        time.sleep(5)
 
 
 if __name__ == '__main__':
