@@ -3,13 +3,19 @@
 from paramiko_ssh import qytang_ssh
 import hashlib
 import time
+import re
 
 
 def qytang_get_config(ip, username='admin', password='Cisc0123'):
     try:
-        cmd = 'show running-config | begin hostname'  # 教主的re，是为了用正则表达式去获取这个命令的输出内容吗？
-        config = qytang_ssh(ip, username, password, cmd=cmd)
-        return config
+        device_config_raw = qytang_ssh(ip, username, password, cmd='show run')
+        split_result = re.split(r'\r\nhostname \S+\r\n', device_config_raw)
+        device_config = device_config_raw.replace(split_result[0], '').strip()
+        return device_config
+        # cmd = 'show running-config | begin hostname'  # 教主的re，是为了用正则表达式去获取这个命令的输出内容吗？
+        # config = qytang_ssh(ip, username, password, cmd=cmd)
+        # return config
+
     except Exception:
         return
 

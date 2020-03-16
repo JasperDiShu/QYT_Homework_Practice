@@ -4,6 +4,7 @@ import paramiko
 import os
 import re
 
+
 def qytang_ssh(ip, username, password, port=22, cmd='ls'):
     ssh = paramiko.SSHClient()
     ssh.load_system_host_keys()
@@ -12,6 +13,7 @@ def qytang_ssh(ip, username, password, port=22, cmd='ls'):
     stdin, stdout, stderr = ssh.exec_command(cmd)
     x = stdout.read().decode()
     return x
+
 
 def ssh_get_route(ip, username, password):
     qytang_ssh(ip, username, password)
