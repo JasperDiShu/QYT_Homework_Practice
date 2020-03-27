@@ -27,16 +27,29 @@ def udp_send_data(ip, port, data_list):
 
         # ---HASH校验---
         # 16 字节 MD5值
+
+        # My solution
+        # send_data = pickle.dumps(x)
+        # length = len(send_data)
+        # header = struct.pack('!hhii', version, pkt_type, seq_id, length)
+        # m = hashlib.md5()
+        # m.update(str(header).encode())
+        # md5_value = m.hexdigest().encode()
+        # data = struct.pack('!hhii16s228s', version, pkt_type, seq_id, length, md5_value, send_data)
+        # # !hhii16s228s的228是用（2048-28*8）/ 8
+        # # 得到的，不知道这样是否是正确的？？？
+        # s.sendto(data, address)
+
+        # Reference solution
         send_data = pickle.dumps(x)
-        length = len(send_data)
-        header = struct.pack('!hhii', version, pkt_type, seq_id, length)
+        header = struct.pack('>HHLL', version, pkt_type, seq_id, len(send_data))
         m = hashlib.md5()
-        m.update(str(header).encode())
-        md5_value = m.hexdigest().encode()
-        data = struct.pack('!hhii16s228s', version, pkt_type, seq_id, length, md5_value, send_data)
-        # !hhii16s228s的228是用（2048-28*8）/ 8
-        # 得到的，不知道这样是否是正确的？？？
-        s.sendto(data, address)
+        m.update(header + send_data)
+
+        md5_value = m.digest()
+
+        s.sendto(header + send_data + md5_value, address)
+
         seq_id += 1
     s.close()
 
