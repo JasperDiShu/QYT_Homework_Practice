@@ -7,5 +7,11 @@
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
       <jdbc-url>jdbc:sqlite:$PROJECT_DIR$/Homework/2020_Mar_19/qytanghomework_1.sqlite</jdbc-url>
     </data-source>
+    <data-source source="LOCAL" name="qytangconfig" uuid="d401077a-b2ea-41c6-aeb2-d03a6e83afc3">
+      <driver-ref>sqlite.xerial</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
+      <jdbc-url>jdbc:sqlite:$PROJECT_DIR$/Homework/2020_Mar_20/qytangconfig.sqlite</jdbc-url>
+    </data-source>
   </component>
 </project>

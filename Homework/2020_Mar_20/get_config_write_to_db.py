@@ -3,7 +3,7 @@
 
 # 2020.03.20-Homework--get running config and write md5 to db
 
-from Simple_SSH_Client import qytang_ssh
+import paramiko
 import hashlib
 import re
 import sqlite3
@@ -13,6 +13,16 @@ device_list = ['192.168.200.101']
 # 用户名和密码
 username = 'admin'
 password = 'Cisc0123'
+
+
+def qytang_ssh(ip, username, password, port=22, cmd='pwd'):
+    ssh = paramiko.SSHClient()
+    ssh.load_system_host_keys()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(ip, port, username, password, timeout=5, compress=True)
+    stdin, stdout, stderr = ssh.exec_command(cmd)
+    x = stdout.read().decode()
+    return x
 
 
 def get_config_md5(ip, username, password):
