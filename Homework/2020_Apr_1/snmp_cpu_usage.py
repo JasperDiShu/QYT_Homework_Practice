@@ -3,8 +3,8 @@
 
 # 2020.04.01-Homework--snmp cpu usage
 
-import datetime
 import time
+import datetime
 import pg8000
 from pysnmp.hlapi import *
 from matplotlib import pyplot as plt
@@ -40,16 +40,14 @@ def snmpv2_get(ip, community, oid, port=161):
 def write_cpuusage_todb(ip, community, oid, seconds):
     conn = pg8000.connect(host='192.168.200.136', user='shudidbuser', password='shudidbpassword', database='shudidb')
     cursor = conn.cursor()
-    cursor.execute("create table if not exists routerdb_cpu(id INTEGER PRIMARY KEY, time timestamp with time zone, cpu int)")
+    cursor.execute("create table if not exists routerdb_cpu(id SERIAL PRIMARY KEY, create_time timestamp default current_timestamp, "
+                   "cpu int)")
 
-    cpu_info_id = 1
     while seconds > 0:
         cpu_info = snmpv2_get(ip, community, oid, port=161)[1]
-        time_info = datetime.datetime.now()
-        cursor.execute("insert into routerdb_cpu values ('%d', '%s', %d)" % (cpu_info_id, time_info, int(cpu_info)))
+        cursor.execute("insert into routerdb_cpu(cpu) values (%d)" % int(cpu_info))
         # 每五秒采集一次数据
         time.sleep(5)
-        cpu_info_id += 1
         seconds -= 5
         # 提交数据到数据库
         conn.commit()
@@ -60,13 +58,15 @@ def get_cpu_usage_list():
     cpu_usage_list = []
     conn = pg8000.connect(host='192.168.200.136', user='shudidbuser', password='shudidbpassword', database='shudidb')
     cursor = conn.cursor()
-    cursor.execute("select * from routerdb_cpu")
-    # cursor.execute("select * from routerdb")
+    cursor.execute("select * from routerdb_cpu where create_time >= current_timestamp - interval '1 min'")
     yourresults = cursor.fetchall()
-    if yourresults is not None:
+    if yourresults:
         for x, y, z in yourresults:
             time_list.append(y)
             cpu_usage_list.append(z)
+    else:
+        time_list.append(datetime.datetime.now())
+        cpu_usage_list.append(0)
 
     return time_list, cpu_usage_list
 
@@ -97,23 +97,24 @@ def mat_line(time_list, cpu_usage_list):
     fig.autofmt_xdate()  # 当x轴太拥挤的时候可以让他自适应
 
     # 实线红色
-    ax.plot(time_list, cpu_usage_list, linestyle='solid', color='r', label='R1')
-    # 虚线黑色
-    # ax.plot(x, y, linestyle='dashed', color='b', label='R1')
+    if time_list:
+        ax.plot(time_list, cpu_usage_list, linestyle='solid', color='r', label='R1')
+        # 虚线黑色
+        # ax.plot(x, y, linestyle='dashed', color='b', label='R1')
 
-    # 如果你有两套数据,完全可以在一幅图中绘制双线
-    # ax.plot(x2, y2, linestyle='dashed', color='b', label='R2')
+        # 如果你有两套数据,完全可以在一幅图中绘制双线
+        # ax.plot(x2, y2, linestyle='dashed', color='b', label='R2')
 
-    # 设置说明的位置
-    ax.legend(loc='upper left')
+        # 设置说明的位置
+        ax.legend(loc='upper left')
 
-    # 保存到图片
-    plt.savefig('result3.png')
-    # 绘制图形
-    plt.show()
+        # 保存到图片
+        plt.savefig('result3.png')
+        # 绘制图形
+        plt.show()
 
 
 if __name__ == '__main__':
-    write_cpuusage_todb("192.168.200.101", "tcpipro", "1.3.6.1.4.1.9.9.109.1.1.1.1.3.7", 60)
+    # write_cpuusage_todb("192.168.200.101", "tcpipro", "1.3.6.1.4.1.9.9.109.1.1.1.1.3.7", 60)
     get_cpu_usage_list()
     mat_line(get_cpu_usage_list()[0], get_cpu_usage_list()[1])

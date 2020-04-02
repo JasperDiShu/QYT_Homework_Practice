@@ -3,8 +3,8 @@
 
 # 2020.04.02-Homework--snmp mem usage
 
-import datetime
 import time
+import datetime
 import pg8000
 from pysnmp.hlapi import *
 from matplotlib import pyplot as plt
@@ -40,21 +40,19 @@ def snmpv2_get(ip, community, oid, port=161):
 def write_memusage_todb(ip, community, seconds):
     conn = pg8000.connect(host='192.168.200.136', user='shudidbuser', password='shudidbpassword', database='shudidb')
     cursor = conn.cursor()
-    cursor.execute("create table if not exists routerdb_mem(id INTEGER PRIMARY KEY, time timestamp, mem_percent int)")
+    cursor.execute("create table if not exists routerdb_mem(id SERIAL PRIMARY KEY, create_time timestamp default current_timestamp, "
+                   "mem_percent int)")
 
     oid_mem_used = '1.3.6.1.4.1.9.9.109.1.1.1.1.12.7'
     oid_mem_free = '1.3.6.1.4.1.9.9.109.1.1.1.1.13.7'
-    mem_info_id = 1
 
     while seconds > 0:
         mem_used = snmpv2_get(ip, community, oid_mem_used, port=161)[1]
         mem_free = snmpv2_get(ip, community, oid_mem_free, port=161)[1]
         mem_percent = int(mem_used) / (int(mem_used) + int(mem_free)) * 100
-        time_info = datetime.datetime.now()
-        cursor.execute("insert into routerdb_mem values ('%d', '%s', %d)" % (mem_info_id, time_info, int(mem_percent)))
+        cursor.execute("insert into routerdb_mem(mem_percent) values (%d)" % mem_percent)
         # 每五秒采集一次数据
         time.sleep(5)
-        mem_info_id += 1
         seconds -= 5
         # 提交数据到数据库
         conn.commit()
@@ -65,13 +63,15 @@ def get_mem_usage_list():
     mem_usage_list = []
     conn = pg8000.connect(host='192.168.200.136', user='shudidbuser', password='shudidbpassword', database='shudidb')
     cursor = conn.cursor()
-    cursor.execute("select * from routerdb_mem")
-    # cursor.execute("select * from routerdb")
+    cursor.execute("select * from routerdb_mem where create_time >= current_timestamp - interval '1 min'")
     yourresults = cursor.fetchall()
-    if yourresults is not None:
+    if yourresults:
         for x, y, z in yourresults:
             time_list.append(y)
             mem_usage_list.append(z)
+    else:
+        time_list.append(datetime.datetime.now())
+        mem_usage_list.append(0)
 
     return time_list, mem_usage_list
 
@@ -102,23 +102,24 @@ def mat_line(time_list, cpu_usage_list):
     fig.autofmt_xdate()  # 当x轴太拥挤的时候可以让他自适应
 
     # 实线红色
-    ax.plot(time_list, cpu_usage_list, linestyle='solid', color='r', label='MEM利用率')
-    # 虚线黑色
-    # ax.plot(x, y, linestyle='dashed', color='b', label='R1')
+    if time_list:
+        ax.plot(time_list, cpu_usage_list, linestyle='solid', color='r', label='MEM利用率')
+        # 虚线黑色
+        # ax.plot(x, y, linestyle='dashed', color='b', label='R1')
 
-    # 如果你有两套数据,完全可以在一幅图中绘制双线
-    # ax.plot(x2, y2, linestyle='dashed', color='b', label='R2')
+        # 如果你有两套数据,完全可以在一幅图中绘制双线
+        # ax.plot(x2, y2, linestyle='dashed', color='b', label='R2')
 
-    # 设置说明的位置
-    ax.legend(loc='upper left')
+        # 设置说明的位置
+        ax.legend(loc='upper left')
 
-    # 保存到图片
-    plt.savefig('result4.png')
-    # 绘制图形
-    plt.show()
+        # 保存到图片
+        plt.savefig('result4.png')
+        # 绘制图形
+        plt.show()
 
 
 if __name__ == '__main__':
-    write_memusage_todb("192.168.200.101", "tcpipro", 60)
+    # write_memusage_todb("192.168.200.101", "tcpipro", 60)
     get_mem_usage_list()
     mat_line(get_mem_usage_list()[0], get_mem_usage_list()[1])
