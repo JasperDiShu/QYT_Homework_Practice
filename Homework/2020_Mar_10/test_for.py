@@ -22,8 +22,8 @@ for z in List1_only:
 
 print('\n')
 
-# 方案二：修改为函数的更加通用的方案
 
+# 方案二：修改为函数的更加通用的方案
 def find_same_string(List1, List2):
     print('方案二：修改为函数的更加通用的方案')
     List_same = []
@@ -40,6 +40,7 @@ def find_same_string(List1, List2):
         print('%s in List1 and List2' % str(y))
     for z in List1_only:
         print('%s only in List1' % str(z))
+
 
 if __name__ == '__main__':
     list1 = ['aaa', 111, (4, 5), 2.01]
