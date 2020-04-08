@@ -48,7 +48,7 @@ def Server_JSON(ip, port):
                 print('上传文件{0}保存成功！'.format(obj.get('upload_file')))
                 # file_name = obj.get('upload_file')
                 # print(file_name)
-                data = obj.get('message')
+                data = obj.get('file-bit')
                 # print(data)
                 new_file = open('upload_file.py', 'wb')
                 new_file.write(data.encode())
@@ -60,7 +60,9 @@ def Server_JSON(ip, port):
                 file_name = obj.get('download_file')
                 with open(file_name, 'rb', 1024) as f:
                     file_data = f.read()
-                return_data.update({'file-bit': file_data.decode()})
+                print(type(file_data))
+                byte_data = base64.b64encode(file_data)
+                return_data.update({'file-bit': byte_data.decode()})
                 # print('server sent data to client!')
 
             connection.send(json.dumps(return_data).encode())
