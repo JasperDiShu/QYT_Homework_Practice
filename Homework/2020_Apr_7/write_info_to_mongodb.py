@@ -3,11 +3,12 @@
 
 # 2020.04.07-Homework--write info to mongo db, search last 2 minutes record, and show in matplot line chart.
 
+import time
+import numpy as np
+import pprint
 from pysnmp.hlapi import *
 from pysnmp.entity.rfc3413.oneliner import cmdgen
 from pymongo import *
-import numpy as np
-import pprint
 from datetime import datetime, timedelta
 from matplotlib import pyplot as plt
 
@@ -143,6 +144,13 @@ def delete_all():
     db.deviceinfo.remove()
 
 
+def write_db_period(interval=5, seconds=120):
+    while seconds > 0:
+        write_info_to_mongodb(get_all_info('192.168.200.101', 'tcpipro'))
+        time.sleep(interval)
+        seconds -= interval
+
+
 def snmpv2_get(ip, community, oid, port=161):
     # varBinds是列表，列表中的每个元素的类型是ObjectType（该类型的对象表示MIB variable）
     error_indication, error_status, error_index, var_binds = next(
@@ -197,7 +205,8 @@ def snmpv2_getbulk(ip, community, oid, count=25, port=161):
 
 
 if __name__ == '__main__':
-    write_info_to_mongodb(get_all_info('192.168.200.101', 'tcpipro'))
+    write_db_period()
+    # write_info_to_mongodb(get_all_info('192.168.200.101', 'tcpipro'))
     search_info_from_mongodb('GigabitEthernet3', 'in', 2)
     mat_line(search_info_from_mongodb('GigabitEthernet3', 'in', 2)[0], search_info_from_mongodb('GigabitEthernet3', 'in', 2)[1])
     # delete_all()
