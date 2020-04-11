@@ -3,11 +3,9 @@
 
 # 2020.04.06-Homework--syslog show chart log source
 
-
-from dateutil import parser
-from matplotlib import pyplot as plt
 import pg8000
-from syslog_server_todb import severity_level_dict
+from matplotlib import pyplot as plt
+from dateutil import parser
 
 
 def syslog_show_log_source(host, user, password, database):

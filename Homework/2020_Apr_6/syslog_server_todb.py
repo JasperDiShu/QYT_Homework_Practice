@@ -3,14 +3,10 @@
 
 # 2020.04.06-Homework--syslog server to database
 
-import logging
 import socketserver
-import threading
-import os
 import re
 import pg8000
 from dateutil import parser
-from datetime import datetime
 
 # facility与ID的对应关系的字典
 facility_dict = {0: 'KERN',
@@ -49,15 +45,23 @@ class SyslogUDPHandler(socketserver.BaseRequestHandler):
     def handle(self):
         data = bytes.decode(self.request[0].strip())  # 读取数据
         # print(data)
-        if re.match('.*from FULL to DOWN, Neighbor Down.*', str(data)):
-            syslog_info = re.match(r'^<(\d*)>(\d*): \*(.*): %(\w+)-(\d)-(\w+): (.*),(.*)(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})(.*)',
-                                   str(data)).groups()
-            print(syslog_info[3]+' '+syslog_info[6]+' Neighbor '+syslog_info[8]+' status DOWN')
 
-        elif re.match('.*from LOADING to FULL, Loading Done.*', str(data)):
-            syslog_info = re.match(r'^<(\d*)>(\d*): \*(.*): %(\w+)-(\d)-(\w+): (.*),(.*)(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})(.*)',
-                                   str(data)).groups()
-            print(syslog_info[3] + ' ' + syslog_info[6] + ' Neighbor ' + syslog_info[8] + ' status FULL')
+        # # my solution &&&***
+        # if re.match('.*from FULL to DOWN, Neighbor Down.*', str(data)):
+        #     syslog_info = re.match(r'^<(\d*)>(\d*): \*(.*): %(\w+)-(\d)-(\w+): (.*),(.*)(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})(.*)',
+        #                            str(data)).groups()
+        #     print(syslog_info[3]+' '+syslog_info[6]+' Neighbor '+syslog_info[8]+' status DOWN')
+        #
+        # elif re.match('.*from LOADING to FULL, Loading Done.*', str(data)):
+        #     syslog_info = re.match(r'^<(\d*)>(\d*): \*(.*): %(\w+)-(\d)-(\w+): (.*),(.*)(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})(.*)',
+        #                            str(data)).groups()
+        #     print(syslog_info[3] + ' ' + syslog_info[6] + ' Neighbor ' + syslog_info[8] + ' status FULL')
+
+        # reference solution &&&***
+        if 'OSPF-5-ADJCHG' in str(data):
+            ospf_info = re.match(r'.*OSPF-5-ADJCHG: Process (\d+), Nbr (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) on (\w+\d+) from (\w+) to ('
+                                 r'\w+),.*', str(data)).groups()
+            print(f'OSPF Process {ospf_info[0]} Neighbor {ospf_info[1]} status {ospf_info[4]}')
 
         syslog_info_dict = {'device_ip': self.client_address[0]}
         try:
@@ -126,8 +130,8 @@ if __name__ == "__main__":
     # 连接数据库
     conn = pg8000.connect(host='192.168.200.136', user='shudidbuser', password='shudidbpassword', database='shudidb')
     cursor = conn.cursor()
-    # 创建数据库
 
+    # 创建数据库中的表
     cursor.execute("create table if not exists syslogdb(id SERIAL PRIMARY KEY,\
                                          time varchar(64), \
                                          device_ip varchar(32),\

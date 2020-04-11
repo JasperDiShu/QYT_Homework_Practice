@@ -3,17 +3,17 @@
 
 # 2020.04.06-Homework--syslog show chart severity
 
-
-from dateutil import parser
-from matplotlib import pyplot as plt
 import pg8000
+from matplotlib import pyplot as plt
 from syslog_server_todb import severity_level_dict
+from dateutil import parser
 
 
 def syslog_show_severity(host, user, password, database):
     # 连接数据库
     conn = pg8000.connect(host=host, user=user, password=password, database=database)
     cursor = conn.cursor()
+
     # 提取时间与CPU利用率信息
     cursor.execute("select severity_level as level,COUNT(*) as count from syslogdb group by severity_level")
     yourresults = cursor.fetchall()
