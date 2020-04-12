@@ -31,6 +31,8 @@ def write_pkt_mongodb(pkt):
 def delete_all():
     db.packetinfo.remove()
 
+
+'''
 # *******************************
 
 # ####################最原始操作,信息过量#####################
@@ -119,7 +121,7 @@ def mat_bar(result_dict):
     # ##########################添加注释###################################
     plt.show()
 # End for the practice part ****************************************************
-
+'''
 
 if __name__ == '__main__':
     cap = pyshark.FileCapture(pcap_data_dir + 'dos.pcap', keep_packets=False)
