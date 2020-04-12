@@ -3,7 +3,7 @@
 
 # 2020.04.09-Homework--configuration change email notification
 
-
+import datetime
 import time
 import pg8000
 import paramiko
@@ -60,7 +60,7 @@ def create_config_md5_table():
     cursor = conn.cursor()
     # 创建数据库
     cursor.execute("create table if not exists config_md5 (id SERIAL PRIMARY KEY, ip varchar(40), config varchar(99999), "
-                   "md5_config varchar(999), create_time timestamp default current_timestamp)")
+                   "md5_config varchar(9999), create_time timestamp default current_timestamp)")
 
     # cursor.execute("create table config_md5 (ip varchar(40), config varchar(99999), md5 varchar(999))")
     conn.commit()
@@ -72,27 +72,35 @@ def write_config_md5_to_db():
     # 逐个迭代设备，写入数据库！
     for device in device_list:
         config_and_md5 = get_config_md5(device, username, password)
-        # print(config_and_md5[2])
-        # print(type(config_and_md5[2]))
-        cursor.execute("select md5_config from config_md5 where ip='{0}'".format(device))
+        # print(config_and_md5[1])
+        # print(type(config_and_md5[1]))
+        cursor.execute("select * from config_md5 where ip='{0}'".format(device))
         md5_results = cursor.fetchall()
         # print(md5_results)
         # print(type(md5_results[-1][0]))
         if not md5_results:
             # 如果设备的数据库条目不存在，就写入
-            cursor.execute("insert into config_md5(ip, config, md5_config) values ('%s', '%s', '%s')" % (device, config_and_md5[1], config_and_md5[2]))
+            cursor.execute("insert into config_md5(ip, config, md5_config) values ('%s', '%s', '%s')" % (device, config_and_md5[1],
+                                                                                                        config_and_md5[2]))
+            conn.commit()
         else:
             # 如果之前备份的MD5值与当前获取的MD5值不匹配！就更新条目
-            if config_and_md5[2] != md5_results[-1][0]:
-                cursor.execute("insert into config_md5(ip, config, md5_config) values ('%s', '%s', '%s')" % (device, config_and_md5[1], config_and_md5[2]))
+            if config_and_md5[1] != md5_results[0][2]:
+                cursor.execute("update config_md5 set config='{0}', md5_config='{1}', create_time='{2}' where ip='{3}'".format(
+                    config_and_md5[1], config_and_md5[2],
+                    datetime.datetime.now(), device))
+                compare_two_config_changed_sendmail(md5_results[0][2], config_and_md5[1])
+                conn.commit()
             else:  # 如果之前备份的MD5值与当前获取的MD5值匹配！就跳过
                 continue
+
     # cursor.execute("select * from config_md5")
     # all_result = cursor.fetchall()
     # # 打印查看IP和MD5值
     # for x in all_result:
-    #     print(x[1], x[3])
-    conn.commit()
+    #     print(x[0], x[2])
+
+    conn.close()
 
 
 def get_last_config_from_db():
@@ -103,25 +111,25 @@ def get_last_config_from_db():
     return result[0][0]
 
 
-def compare_two_config_changed_sendmail():
-    write_config_md5_to_db()
-    result1 = get_last_config_from_db()
-    time.sleep(60)
-    write_config_md5_to_db()
-    result2 = get_last_config_from_db()
+def compare_two_config_changed_sendmail(result1, result2):
+    # write_config_md5_to_db()
+    # result1 = get_last_config_from_db()
+    # time.sleep(60)
+    # write_config_md5_to_db()
+    # result2 = get_last_config_from_db()
+    # print(diff_txt(result1, result2))
 
     if result1 != result2:
         ip = device_list[0]
         mailserver = 'smtp.qq.com'
         mailusername = '578225736@qq.com'
-        mailpassword = 'password of this account'  # 先隐藏，用时再修改成正确的
+        mailpassword = 'fiokihiozyxsbecg'  # 先隐藏，用时再修改成正确的
         From = '578225736@qq.com'
         Tos = '578225736@qq.com'
         Subj = '路由器' + ip + '配置变更'
 
         shudi_smtp_attachment(mailserver=mailserver, username=mailusername, password=mailpassword, From=From, To=Tos, Subj=Subj,
                               Main_Body=diff_txt(result1, result2))
-    # print(diff_txt(result1, result2))
 
 
 def shudi_smtp_attachment(mailserver, username, password, From, To, Subj, Main_Body, files=None):
@@ -158,4 +166,5 @@ def shudi_smtp_attachment(mailserver, username, password, From, To, Subj, Main_B
 
 if __name__ == '__main__':
     create_config_md5_table()
-    compare_two_config_changed_sendmail()
+    write_config_md5_to_db()
+    # compare_two_config_changed_sendmail()
