@@ -7,6 +7,9 @@ import os
 import poplib
 import email
 import base64
+import time
+from pprint import pprint
+
 import paramiko
 import re
 import smtplib, email.utils
@@ -86,7 +89,6 @@ def qyt_rec_mail(mailserver, mailuser, mailpasswd, save_file=False, delete_email
     server.user(mailuser)  # 邮件服务器用户名
     server.pass_(mailpasswd)  # 邮件服务器密码
     mails_list = []
-    subject = ''
     try:
         print(server.getwelcome())  # 打印服务器欢迎信息
         # b'+OK QQMail POP3 Server v1.0 Service Ready(QQMail v2.0)'
@@ -113,7 +115,6 @@ def qyt_rec_mail(mailserver, mailuser, mailpasswd, save_file=False, delete_email
             for header_name, header_content in part_list[0].items():
                 if header_name == 'Subject':
                     mail_dict[header_name] = decode_subject_base64(header_content)  # base64解码Subject
-                    subject = mail_dict[header_name]
                 else:
                     mail_dict[header_name] = header_content
 
@@ -176,7 +177,29 @@ def qyt_rec_mail(mailserver, mailuser, mailpasswd, save_file=False, delete_email
     finally:
         server.quit()  # 退出服务器
 
-    return mails_list, subject
+    return mails_list
+
+
+def get_cmd_sender():
+    while True:
+        try:
+            for x in qyt_rec_mail('pop.qq.com', '578225736@qq.com', 'password of this account', save_file=False, delete_email=True):
+                pprint(x, indent=4)
+                print(x.get('Subject'))
+                print(x.get('From'))
+                if 'jaspershu@foxmail.com' in x.get('From') and 'cmd' in x.get('Subject'):
+                    cmd_exec = x.get('Subject').split(':')[1]
+                    cmd_result = os.popen(cmd_exec).read()
+                    print(cmd_result)
+                    shudi_smtp_attachment('smtp.qq.com', '578225736@qq.com', 'password of this account', '578225736@qq.com',
+                                          '578225736@qq.com',
+                                          f'cmd {cmd_exec} exec result', cmd_result)
+        except KeyboardInterrupt:
+            # 如果出现KeyboardInterrupt异常的处理方法
+            print('接收到管理员的Ctrl+C！')
+            print('退出程序')
+            break
+        time.sleep(30)
 
 
 def get_cmd_result():
@@ -205,5 +228,6 @@ def send_result_back(cmd):
 
 
 if __name__ == '__main__':
-    get_cmd = get_cmd_result()
-    send_result_back(get_cmd)
+    # get_cmd = get_cmd_result()
+    # send_result_back(get_cmd)
+    get_cmd_sender()
