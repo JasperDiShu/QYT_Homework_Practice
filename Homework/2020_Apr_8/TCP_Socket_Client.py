@@ -53,6 +53,7 @@ def Client_JSON(ip, port, obj):
         print('收到确认数据：', return_data)
     else:
         print('收到确认数据：', return_data)
+        # my solution
         # 应该考虑写入下载的文件名！但是由于实验室相同目录测试！所以使用了'download_file.py'
         data = return_data.get('file-bit')
         byte_data = base64.b64decode(data)
@@ -61,6 +62,13 @@ def Client_JSON(ip, port, obj):
         new_file.close()
         print('下载文件{0}保存成功！'.format(obj.get('download_file')))
         sockobj.close()
+
+        # # reference solution
+        # fp = open(return_data.get('download_file'), 'wb')
+        # fp.write(base64.b64decode(return_data.get('file-bit').encode()))
+        # fp.close()
+        # print('下载文件{0}保存成功！'.format(obj.get('download_file')))
+        # sockobj.close()
 
 
 if __name__ == '__main__':
