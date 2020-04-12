@@ -51,7 +51,7 @@ def Server_JSON(ip, port):
                 data = obj.get('file-bit')
                 # print(data)
                 new_file = open('upload_file.py', 'wb')
-                new_file.write(data.encode())
+                new_file.write(base64.b64decode(data.encode()))
                 new_file.close()
                 # print('write file success!')
 
