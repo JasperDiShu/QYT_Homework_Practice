@@ -123,7 +123,7 @@ def compare_two_config_changed_sendmail(result1, result2):
         ip = device_list[0]
         mailserver = 'smtp.qq.com'
         mailusername = '578225736@qq.com'
-        mailpassword = 'fiokihiozyxsbecg'  # 先隐藏，用时再修改成正确的
+        mailpassword = 'password of this account'  # 先隐藏，用时再修改成正确的
         From = '578225736@qq.com'
         Tos = '578225736@qq.com'
         Subj = '路由器' + ip + '配置变更'
